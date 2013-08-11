@@ -21,15 +21,17 @@ public class Human extends Player{
         int[] move = new int[2];
 
         String cellCode = input.next();
-        if (cellCode.equals("exit")) {
-            move[0] = -1; // code for 'exit'
+
+        if (cellCode.equals("back")) {
+            move[0] = Player.CODE_TAKE_STEP_BACK;
+        } else if (cellCode.equals("exit")) {
+            move[0] = Player.CODE_EXIT;
+        } else if (cellCode.length() < 2) {
+            move[0] = Player.CODE_INVALID_CELL_CODE;
         } else {
             move[0] = (int)cellCode.charAt(0) - (int)('A');
             move[1] = (int)cellCode.charAt(1) - (int)('0');
         }
-
-
-        //System.out.println(move[0] + " " + move[1]);
 
         return move;
     }

@@ -7,12 +7,12 @@ public class Field {
     private static final int MIN_FIELD_SIZE = 2;
     private static final int MAX_FIELD_SIZE = 9;
     private static final char DEFAULT_CELL_ITEM = ' ';
-
     public static final char DEFAULT_X_ITEM = 'X';
     public static final char DEFAULT_O_ITEM = '0';
 
     // For history
     private int movesPassed = 0;
+    private int[] moves;
 
     public static final boolean GAME_STATE_CONTINUES    = false;
     public static final boolean GAME_STATE_ENDED        = true;
@@ -22,6 +22,17 @@ public class Field {
 
     public final char[][] getField() {
         return field;
+    }
+
+    public void getOneStepBack() {
+        if (movesPassed > 0) {
+            movesPassed--;
+            field[getTens(moves[movesPassed])][moves[movesPassed] % 10] = DEFAULT_CELL_ITEM;
+        }
+    }
+
+    private int getTens(int number) {
+        return (number - (number % 10))/10;
     }
 
     public int getMovesPassed() {
@@ -40,6 +51,7 @@ public class Field {
         FIELD_SIZE = fieldSize;
         field = new char[FIELD_SIZE][FIELD_SIZE];
         clearField();
+        moves = new int[FIELD_SIZE*FIELD_SIZE];
     }
 
     public Field() {
@@ -75,80 +87,69 @@ public class Field {
         System.out.println();
     }
 
-    // Not very efficient method of checking the whole field
     public boolean gameState() {
+        if (movesPassed >= (FIELD_SIZE + FIELD_SIZE - 1)) {
+            final int x = getTens(moves[movesPassed-1]);
+            final int y = moves[movesPassed-1] % 10;
 
-        boolean state = GAME_STATE_CONTINUES;
-
-
-        // In one iteration checks one horizontal and one vertical line
-        for (int i=0; i < FIELD_SIZE; i++) {
-            // Vertical
-            int j = 0;
-            while (j < FIELD_SIZE-1) {
-                if ((field[i][j+1] == field[i][j])&&(field[i][j] != Field.DEFAULT_CELL_ITEM)) {
-                    j++;
-                } else {
+            int i = 0;
+            while ((field[i][y] != Field.DEFAULT_CELL_ITEM)&&(field[i][y] == field[i+1][y])) {
+                i++;
+                if (i == (FIELD_SIZE - 1)) {
                     break;
                 }
             }
-            if (j == (FIELD_SIZE -1)) {
-                state = GAME_STATE_ENDED;
-                return state;
+            if (i == (FIELD_SIZE - 1)) {
+                return GAME_STATE_ENDED;
             }
 
-            // Horizontal
-            j = 0;
-            while (j < FIELD_SIZE-1) {
-                if ((field[j+1][i] == field[j][i])&&(field[j][i] != Field.DEFAULT_CELL_ITEM)) {
-                    j++;
-                } else {
+            i=0;
+            while ((field[x][i] != Field.DEFAULT_CELL_ITEM)&&(field[x][i] == field[x][i+1])) {
+                i++;
+                if (i == (FIELD_SIZE - 1)) {
                     break;
                 }
             }
-            if (j == (FIELD_SIZE -1)) {
-                state = GAME_STATE_ENDED;
-                return state;
+            if (i == (FIELD_SIZE - 1)) {
+                return GAME_STATE_ENDED;
+            }
+
+            if (x == y) {
+                i=0;
+                while ((field[i][i] != Field.DEFAULT_CELL_ITEM)&&(field[i][i] == field[i+1][i+1])) {
+                    i++;
+                    if (i == (FIELD_SIZE - 1)) {
+                        break;
+                    }
+                }
+                if (i == (FIELD_SIZE - 1)) {
+                    return GAME_STATE_ENDED;
+                }
+            }
+
+            if (x == (FIELD_SIZE - y -1)) {
+                i=0;
+                while ((field[i][FIELD_SIZE - i - 1] != Field.DEFAULT_CELL_ITEM)&&
+                        (field[i][FIELD_SIZE - i - 1] == field[i+1][FIELD_SIZE - i - 2])) {
+                    i++;
+                    if (i == (FIELD_SIZE - 1)) {
+                        break;
+                    }
+                }
+                if (i == (FIELD_SIZE - 1)) {
+                    return GAME_STATE_ENDED;
+                }
             }
         }
-
-        // First diagonal
-        int i;
-        for (i=0; i < FIELD_SIZE-1; i++) {
-            if ((field[i][i] == field[i+1][i+1])&&(field[i][i] != Field.DEFAULT_CELL_ITEM)) {
-                i++;
-            } else {
-                break;
-            }
-        }
-        if (i == (FIELD_SIZE -1)) {
-            state = GAME_STATE_ENDED;
-            return state;
-        }
-
-        // Second diagonal
-
-        for (i=0; i < FIELD_SIZE-1; i++) {
-            if ((field[i][FIELD_SIZE - i - 1] == field[i+1][FIELD_SIZE - i - 2])&&(field[i][FIELD_SIZE - i - 1] != Field.DEFAULT_CELL_ITEM)) {
-                i++;
-            } else {
-                break;
-            }
-        }
-        if (i == (FIELD_SIZE -1)) {
-            state = GAME_STATE_ENDED;
-            return state;
-        }
-
-        return state;
+        return GAME_STATE_CONTINUES;
     }
 
     public boolean makeMove(char item, int x, int y) {
         if ((item == DEFAULT_X_ITEM)||(item == DEFAULT_O_ITEM)) {
-            if ((x*y >= 0)&&(x < FIELD_SIZE)&&(y < FIELD_SIZE)) { // we can assume that x >= 0
-                                                                  // if x is not, game would have exit in class Game
+            if ((x >= 0)&&(y >= 0)&&(x < FIELD_SIZE)&&(y < FIELD_SIZE)) {
                 if (field[x][y] == DEFAULT_CELL_ITEM) {
                     putInCell(item, x, y);
+                    moves[movesPassed] = x*10 + y;
                     movesPassed++;
                     return true;
                 }
